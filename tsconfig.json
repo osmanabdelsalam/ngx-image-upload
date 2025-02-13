@@ -11,6 +11,11 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "paths": {
+      "ngx-image-upload-preview": [
+        "./dist/ngx-image-upload-preview"
+      ]
+    },
     "esModuleInterop": true,
     "sourceMap": true,
     "declaration": false,
