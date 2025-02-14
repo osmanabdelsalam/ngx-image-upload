@@ -1,0 +1,43 @@
+<div class="upload-wrapper" [class.has-preview]="previewUrl">
+  <label class="image-preview" [for]="uniqueId"
+         (dragover)="onDragOver($event)"
+         (dragleave)="onDragLeave($event)"
+         (drop)="onDrop($event)"
+         [class.drag-over]="isDragging"
+         role="region"
+         aria-label="File upload area">
+
+    <input
+      type="file"
+      [id]="uniqueId"
+      (change)="onFileChange($event)"
+      [attr.aria-describedby]="error ? errorId : null"
+      aria-label="File input"
+      accept="image/*"
+    />
+
+    <div
+      *ngIf="uploading"
+      class="progress-bar"
+      [attr.aria-valuenow]="uploadProgress"
+      aria-valuemin="0"
+      aria-valuemax="100">
+        <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+    </div>
+
+    <div *ngIf="!previewUrl && !uploading" class="image-preview-content">
+      <p>Drag & Drop or <span>Browse</span></p>
+    </div>
+
+    <div *ngIf="previewUrl && !uploading" class="image-preview-display">
+      <img [src]="previewUrl" alt="Preview" />
+    </div>
+  </label>
+
+  <p
+    *ngIf="error"
+    [id]="errorId"
+    class="error"
+    role="alert"
+    aria-live="polite">{{ error }}</p>
+</div>
