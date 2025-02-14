@@ -19,13 +19,7 @@ Supports **Reactive Forms** and `ngTemplate` for full flexibility.
 ## 🚀 Installation
 
 ```sh
-npm install ngx-image-upload --save
-```
-
-Or with Yarn:
-
-```sh
-yarn add ngx-image-upload
+npm i image-upload-preview --save
 ```
 
 ---
