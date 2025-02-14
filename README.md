@@ -3,6 +3,8 @@
 🚀 A lightweight, customizable Angular library for image uploads with preview, validation, and smooth animations.\
 Supports **Reactive Forms** and `ngTemplate` for full flexibility.
 
+![ngx-image-upload](https://github.com/osmanabdelsalam/ngx-image-upload/blob/main/public/ngx-image-upload.png?raw=true)
+
 ---
 
 ## ✨ Features
