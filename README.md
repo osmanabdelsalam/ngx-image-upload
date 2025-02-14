@@ -19,7 +19,7 @@ Supports **Reactive Forms** and `ngTemplate` for full flexibility.
 ## 🚀 Installation
 
 ```sh
-npm i image-upload-preview --save
+npm i ngx-image-upload-preview
 ```
 
 ---
