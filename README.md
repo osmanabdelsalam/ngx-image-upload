@@ -120,6 +120,7 @@ Built-in Validations
 | width               | number   | 150          | Preview container width              |
 | height              | number   | 150          | Preview container height             |
 | src                 | string   | -            | Default preview image                |
+| disabled            | boolean  | false        | Disable/Enable input                 |
 
 ### Outputs
 | Output              | Type    | Description           |

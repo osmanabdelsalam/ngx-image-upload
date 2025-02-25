@@ -30,6 +30,7 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
   @Input() previewButtonLabel = 'View full size';
   @Input() enablePreviewModal = true;
   @Input() requiredMessage = '';
+  @Input() disabled = false;
   @Output() fileSelected = new EventEmitter<File>();
 
   @ContentChild('defaultText') defaultText!: ElementRef;

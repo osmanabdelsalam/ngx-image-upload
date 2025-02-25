@@ -1,5 +1,5 @@
 <div class="upload-wrapper" [class.has-preview]="previewUrl">
-  <label class="image-preview {{ error?'error-border':''  }}"
+  <label class="image-preview {{ error?'error-border':''  }} {{ disabled? 'disabled' : '' }}"
          [for]="uniqueId"
          (dragover)="onDragOver($event)"
          (dragleave)="onDragLeave($event)"
@@ -12,6 +12,7 @@
 
     <input
       type="file"
+      [disabled]="disabled"
       [id]="uniqueId"
       (change)="onFileChange($event)"
       [attr.aria-describedby]="error ? errorId : null"
@@ -60,7 +61,7 @@
 
 
   <p *ngIf="error && showErrorMessage" [id]="errorId" class="error" role="alert" aria-live="polite">{{ error }}</p>
-  
+
 </div>
 
 <div *ngIf="showFullScreen" class="preview-modal" (click)="closeFullScreen()">
