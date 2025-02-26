@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ImageUploadComponent } from "../../projects/ngx-image-upload-preview/src/lib/image-upload/image-upload.component";
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
@@ -20,5 +20,7 @@ export class AppComponent {
       image1: fb.control(null),
       image2: fb.control(null),
     });
+
+    this.form.disable();
   }
 }

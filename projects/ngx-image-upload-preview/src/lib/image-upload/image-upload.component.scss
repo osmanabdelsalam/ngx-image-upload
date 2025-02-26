@@ -52,9 +52,7 @@
         box-shadow: 0 0 20px var(--box-shadow-color);
       }
     }
-
-
-
+    
     input {
       display: none;
     }
@@ -121,6 +119,16 @@
         transition: width var(--transition-speed) ease-in-out;
       }
     }
+
+    &.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+
+      &:hover {
+        border-color: var(--border-color);
+        background: var(--background-color);
+      }
+    }
   }
 
   .error {
@@ -184,7 +192,6 @@
   }
 }
 
-// Add modal styles
 .preview-modal {
   position: fixed;
   top: 0;

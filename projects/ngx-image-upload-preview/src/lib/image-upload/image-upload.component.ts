@@ -30,7 +30,6 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
   @Input() previewButtonLabel = 'View full size';
   @Input() enablePreviewModal = true;
   @Input() requiredMessage = '';
-  @Input() disabled = false;
   @Output() fileSelected = new EventEmitter<File>();
 
   @ContentChild('defaultText') defaultText!: ElementRef;
@@ -53,9 +52,20 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
   panPosition = { x: 0, y: 0 };
   isPanning = false;
   startPanPosition = { x: 0, y: 0 };
+  isDisabled = false;
 
   onChange: (file: File | null) => void = () => {};
   onTouched: () => void = () => {};
+
+  @Input() set disabled(value: boolean) {
+    this.isDisabled = value;
+    this.cd.markForCheck();
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.isDisabled = isDisabled;
+    this.cd.markForCheck();
+  }
 
   ngAfterContentInit() {
     if (this.defaultText) {
@@ -152,6 +162,7 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
   }
 
   onDragOver(event: DragEvent) {
+    if (this.isDisabled) return;
     event.preventDefault();
     this.isDragging = true;
   }
@@ -162,6 +173,7 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
   }
 
   onDrop(event: DragEvent) {
+    if (this.isDisabled) return;
     event.preventDefault();
     this.isDragging = false;
     const file = event.dataTransfer?.files[0];
@@ -204,6 +216,7 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
 
   openFullScreen() {
     if (this.previewUrl || this.defaultImage) {
+      if (this.isDisabled || !this.previewUrl) return;
       this.showFullScreen = true;
       document.body.style.overflow = 'hidden';
     }

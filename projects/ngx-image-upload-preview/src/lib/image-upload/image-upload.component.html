@@ -1,5 +1,7 @@
 <div class="upload-wrapper" [class.has-preview]="previewUrl">
-  <label class="image-preview {{ error?'error-border':''  }} {{ disabled? 'disabled' : '' }}"
+  <label class="image-preview {{ error?'error-border':''  }}"
+         [class.disabled]="isDisabled"
+         [style.pointer-events]="isDisabled ? 'none' : 'auto'"
          [for]="uniqueId"
          (dragover)="onDragOver($event)"
          (dragleave)="onDragLeave($event)"
@@ -12,7 +14,7 @@
 
     <input
       type="file"
-      [disabled]="disabled"
+      [disabled]="isDisabled"
       [id]="uniqueId"
       (change)="onFileChange($event)"
       [attr.aria-describedby]="error ? errorId : null"
