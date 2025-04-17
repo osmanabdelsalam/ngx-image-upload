@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, ContentChild, ElementRef, EventEmitter, forwardRef, Input, OnChanges, Output, QueryList, SimpleChanges, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import imageCompression from 'browser-image-compression';
 
 @Component({
   selector: 'ngx-image-upload',
@@ -19,7 +20,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
   @Input() maxSizeMB = 2;
-  @Input() allowedTypes = ['image/jpeg', 'image/png'];
+  @Input() allowedTypes = ['*'];
   @Input() src: string | null = null;
   @Input() defaultImage = '';
   @Input() width = 150;
@@ -30,6 +31,14 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
   @Input() previewButtonLabel = 'View full size';
   @Input() enablePreviewModal = true;
   @Input() requiredMessage = '';
+  @Input() compress = false;
+  @Input() compressionOptions = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1024,
+    useWebWorker: true,
+    initialQuality: 0.8,
+  };
+  @Input() showCompressDebugging = false;
   @Output() fileSelected = new EventEmitter<File>();
 
   @ContentChild('defaultText') defaultText!: ElementRef;
@@ -40,7 +49,7 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
   previewUrl: string | null = null;
   error: string | null = null;
   private file: File | null = null;
-  showDefaultText = true; // Flag to control the display of default text
+  showDefaultText = true;
 
   uploading = false;
   uploadProgress = 0;
@@ -119,13 +128,13 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
     img.onload = () => {
       this.previewUrl = src;
       this.showDefaultText = false;
-      this.cd.detectChanges(); // Force view update
+      this.cd.detectChanges();
     };
 
     img.onerror = () => {
       this.previewUrl = this.defaultImage;
       this.showDefaultText = false;
-      this.cd.detectChanges(); // Force view update
+      this.cd.detectChanges();
     };
   }
 
@@ -182,10 +191,46 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
     }
   }
 
-  uploadFile(file: File) {
-    if (!this.allowedTypes.includes(file.type)) {
-      this.error = 'Invalid file type!';
-      return;
+  // uploadFile(file: File) {
+  //   if (!this.allowedTypes.includes('*')) {
+  //     if (!this.allowedTypes.includes(file.type)) {
+  //       this.error = 'Invalid file type!';
+  //       return;
+  //     }
+  //   }
+
+  //   if (file.size > this.maxSizeMB * 1024 * 1024) {
+  //     this.error = 'File size exceeds limit!';
+  //     return;
+  //   }
+
+  //   this.error = null;
+  //   this.uploading = true;
+  //   this.uploadProgress = 0;
+
+  //   const interval = setInterval(() => {
+  //     this.uploadProgress += 10;
+  //     if (this.uploadProgress >= 100) {
+  //       clearInterval(interval);
+  //       this.uploading = false;
+  //       this.fileSelected.emit(file);
+  //       this.onChange(file);
+  //       const reader = new FileReader();
+  //       reader.onload = () => {
+  //         this.previewUrl = reader.result as string;
+  //         this.showDefaultText = false;
+  //       };
+  //       reader.readAsDataURL(file);
+  //     }
+  //   }, 50);
+  // }
+
+  async uploadFile(file: File) {
+    if (!this.allowedTypes.includes('*')) {
+      if (!this.allowedTypes.includes(file.type)) {
+        this.error = 'Invalid file type!';
+        return;
+      }
     }
 
     if (file.size > this.maxSizeMB * 1024 * 1024) {
@@ -196,23 +241,44 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
     this.error = null;
     this.uploading = true;
     this.uploadProgress = 0;
+    const originalSize = (file.size / 1024 / 1024).toFixed(2);
 
-    const interval = setInterval(() => {
-      this.uploadProgress += 10;
-      if (this.uploadProgress >= 100) {
-        clearInterval(interval);
-        this.uploading = false;
-        this.fileSelected.emit(file);
-        this.onChange(file);
-        const reader = new FileReader();
-        reader.onload = () => {
-          this.previewUrl = reader.result as string;
-          this.showDefaultText = false;
-        };
-        reader.readAsDataURL(file);
+    try {
+      // Compress the file if enabled
+      if (this.compress) {
+        file = await this.compressImage(file);
+        const compressedSize = (file.size / 1024 / 1024).toFixed(2);
+        if (this.showCompressDebugging) {
+          console.log(`Original size: ${originalSize} MB`);
+          console.log(`Compressed size: ${compressedSize} MB`);
+        }
       }
-    }, 50);
+
+      const interval = setInterval(() => {
+        this.uploadProgress += 10;
+        if (this.uploadProgress >= 100) {
+          clearInterval(interval);
+          this.uploading = false;
+
+          this.file = file;
+          this.fileSelected.emit(file);
+          this.onChange(file);
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            this.previewUrl = reader.result as string;
+            this.showDefaultText = false;
+          };
+          reader.readAsDataURL(file);
+        }
+      }, 50);
+    } catch (err) {
+      console.error('File upload/compression error:', err);
+      this.error = 'Failed to process the image.';
+      this.uploading = false;
+    }
   }
+
 
   openFullScreen() {
     if (this.previewUrl || this.defaultImage) {
@@ -257,4 +323,103 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
   endPan() {
     this.isPanning = false;
   }
+
+  async compressImage(file: File): Promise<File> {
+
+    const supportedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    let finalFile = file;
+
+    if (!supportedTypes.includes(file.type)) {
+      finalFile = await this.convertToSupportedFormat(file);
+    }
+
+    const options = this.compressionOptions;
+
+    try {
+      const compressedFile = await imageCompression(finalFile, options);
+      return compressedFile;
+    } catch (error) {
+      console.error('Image compression error:', error);
+      return file;
+    }
+  }
+
+  async convertToSupportedFormat(file: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return reject('Canvas not supported');
+
+          ctx.drawImage(img, 0, 0);
+
+          canvas.toBlob(blob => {
+            if (blob) {
+              const originalName = file.name;
+              const nameWithExtension = originalName.includes('.')
+                ? originalName.replace(/\.\w+$/, '.jpeg')
+                : originalName + '.jpeg';
+
+              const newFile = new File([blob], nameWithExtension, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              });
+
+              resolve(newFile);
+            } else {
+              reject('Failed to convert image to JPEG.');
+            }
+          }, 'image/jpeg', 0.95);
+        };
+        img.onerror = reject;
+        img.src = reader.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+
+  // async convertToSupportedFormat(file: File): Promise<File> {
+  //   return new Promise((resolve, reject) => {
+  //     const reader = new FileReader();
+  //     reader.onload = () => {
+  //       const img = new Image();
+  //       img.onload = () => {
+  //         const canvas = document.createElement('canvas');
+  //         canvas.width = img.width;
+  //         canvas.height = img.height;
+
+  //         const ctx = canvas.getContext('2d');
+  //         if (!ctx) return reject('Canvas not supported');
+
+  //         ctx.drawImage(img, 0, 0);
+
+  //         canvas.toBlob(blob => {
+  //           if (blob) {
+  //             const newFile = new File([blob], file.name.replace(/\.\w+$/, '.jpeg'), {
+  //               type: 'image/jpeg',
+  //               lastModified: Date.now()
+  //             });
+  //             resolve(newFile);
+  //           } else {
+  //             reject('Failed to convert image to JPEG.');
+  //           }
+  //         }, 'image/jpeg', 0.95);
+  //       };
+  //       img.onerror = reject;
+  //       img.src = reader.result as string;
+  //     };
+  //     reader.onerror = reject;
+  //     reader.readAsDataURL(file);
+  //   });
+  // }
+
+
 }
