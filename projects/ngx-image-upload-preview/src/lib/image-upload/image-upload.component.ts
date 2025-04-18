@@ -3,6 +3,13 @@ import { ChangeDetectorRef, Component, ContentChild, ElementRef, EventEmitter, f
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import imageCompression from 'browser-image-compression';
 
+export interface CompressionOptions {
+  maxSizeMB?: number;
+  maxWidthOrHeight?: number;
+  useWebWorker?: boolean;
+  initialQuality?: number;
+}
+
 @Component({
   selector: 'ngx-image-upload',
   standalone: true,
@@ -32,7 +39,7 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
   @Input() enablePreviewModal = true;
   @Input() requiredMessage = '';
   @Input() compress = false;
-  @Input() compressionOptions = {
+  @Input() compressionOptions: CompressionOptions = {
     maxSizeMB: 1,
     maxWidthOrHeight: 1024,
     useWebWorker: true,
@@ -190,41 +197,6 @@ export class ImageUploadComponent implements ControlValueAccessor, OnChanges {
       this.uploadFile(file);
     }
   }
-
-  // uploadFile(file: File) {
-  //   if (!this.allowedTypes.includes('*')) {
-  //     if (!this.allowedTypes.includes(file.type)) {
-  //       this.error = 'Invalid file type!';
-  //       return;
-  //     }
-  //   }
-
-  //   if (file.size > this.maxSizeMB * 1024 * 1024) {
-  //     this.error = 'File size exceeds limit!';
-  //     return;
-  //   }
-
-  //   this.error = null;
-  //   this.uploading = true;
-  //   this.uploadProgress = 0;
-
-  //   const interval = setInterval(() => {
-  //     this.uploadProgress += 10;
-  //     if (this.uploadProgress >= 100) {
-  //       clearInterval(interval);
-  //       this.uploading = false;
-  //       this.fileSelected.emit(file);
-  //       this.onChange(file);
-  //       const reader = new FileReader();
-  //       reader.onload = () => {
-  //         this.previewUrl = reader.result as string;
-  //         this.showDefaultText = false;
-  //       };
-  //       reader.readAsDataURL(file);
-  //     }
-  //   }, 50);
-  // }
-
   async uploadFile(file: File) {
     if (!this.allowedTypes.includes('*')) {
       if (!this.allowedTypes.includes(file.type)) {
